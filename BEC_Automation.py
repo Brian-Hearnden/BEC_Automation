@@ -1,3 +1,6 @@
+# see http://desktop.arcgis.com/en/arcmap/10.3/analyze/modelbuilder/integrating-external-programs-within-a-model.htm to setup R script to accept args
+# TBD must be replaced
+
 #import libraries
 import arcpy
 import subprocess
