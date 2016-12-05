@@ -3,6 +3,8 @@
 ##### November 4th, 2016
 rm(list=ls()) #clean the workspace so all previous objects are deleted
 
+
+
 library(scales)
 library(MASS)   
 library(stats)
