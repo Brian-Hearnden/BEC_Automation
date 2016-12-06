@@ -31,8 +31,8 @@ nonCNA <- which(is.na(grid.ref[,6]))  # dem cells outside climateNA extent. need
 #######WILLS CODE FOR CLIMATE BC VARIABLES TO USE####
 ##Expects data with PlotNo, BGC, Lat, long, Elev as first 5 columns and ALL Variable output from ClimateWNA
 ####modify
-colnames(X1)[1]=c("PlotNo")
-colnames(X1)[2]=c("BGC")
+colnames(X1)[1]=c("BGC")
+colnames(X1)[2]=c("_")
 records <- nrow(X1)
 ##X1$PlotNo <- as.integer(seq(from = 1, to = records, by =1))
 attr(X1, "row.names") <- (X1$PlotNo)
