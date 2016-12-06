@@ -65,13 +65,15 @@ coordinates(pts) <- pts[,1:2]   #promote data frame to spatial points object
 projection(pts) <- P4S.latlon  #redefine as latlon
 
 pts2 <- spTransform(pts, P4S.AEA) #project to albers
-# ESSFmc_BAFAv10.pts <- over(pts2,ESSFmc_BAFAv10)  ##extract the BGCv10 attributes to the points (this takes a while, like 30ish minutes)
-# write.csv(ESSFmc_BAFAv10.pts,"InputData\\BGCv10.pts.csv", row.names=FALSE) #write to csv so that you don't have to do the overlay more than once. 
+ESSFmc_BAFAv10.pts <- over(pts2,ESSFmc_BAFAv10)  ##extract the BGCv10 attributes to the points (this takes a while, like 30ish minutes)
+ write.csv(ESSFmc_BAFAv10.pts,"InputData\\BGCv10.pts.csv", row.names=FALSE) #write to csv so that you don't have to do the overlay more than once. 
 
-ESSFmc_BAFAv10.pts <- read.csv("InputData\\ESSFmc_BAFAv10.pts.csv") #if this file has not already been created, then make it with the two rows above. 
+ESSFmc_BAFAv10.pts <- read.csv("InputData\\BGCv10.pts.csv") #if this file has not already been created, then make it with the two rows above. 
 pts.data <- as.data.frame(pts2)
 pts.data1 <- data.frame(id1=ESSFmc_BAFAv10.pts$MAP_LABEL, id2=ESSFmc_BAFAv10.pts$PHASE, lat=pts.data$y, lon=pts.data$x, el=pts.data$namer_dem1) ## create the climateNA input file
 write.csv(pts.data1,"InputData\\ESSFmc_BAFApts4ClimateBC.csv", row.names=FALSE)
+
+#####NOTE: on file version- remove intermediate file exports (write.csv)
 
 ### NON-CODED PROCESS: generate climate data for the pts.csv file using climate NA mult method (annual variables, 1971-2000 normals). 
 
