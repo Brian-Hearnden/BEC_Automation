@@ -3,23 +3,17 @@
 ##### November 4th, 2016
 rm(list=ls()) #clean the workspace so all previous objects are deleted
 
-library(scales)
-library(MASS)   
-library(stats)
-library(rgl)
-library(RColorBrewer)
-library(FNN)
-library(igraph)
-library(raster)
-library(maps)
-library(mapdata)
-library(maptools)
-library(sp)
-library(colorRamps)
-library(rgeos)
-library(rgdal)
-library(foreign)
-library(randomForest)
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+pkgs = c("scales","MASS", "stats", "rgl", "RColorBrewer", "FNN", "igraph", "raster", "maps"
+         , "maptools", "sp", "colorRamps", "rgeos", "rgdal", "foreign", "randomForest")
+
+ipak(pkgs)
 
 ## need to create this folder and a "Results" and "InputData" folder in it. 
 setwd("C:/Users/elilles/Documents/Automated BEC Mapping of Woodland/WoodlandMapping")
@@ -116,58 +110,59 @@ plot(X, col=ColScheme, xaxt="n", yaxt="n", xlim=c(-132, -127.5), ylim=c(56,58), 
 #### Parkland classification and mapping Trial 1: balanced data
 ##################
 
-trial <- "FirstApprox"
-
-#create a fake set of "known points" by subsampling the grid. in reality, these points will be provided by Will and Erica (and will also require a separte climateNA file)
-training <- sample(1:length(class),10000)
-table(class[training]) 
+# trial <- "FirstApprox"
+# 
+# #create a fake set of "known points" by subsampling the grid. in reality, these points will be provided by Will and Erica (and will also require a separte climateNA file)
+# training <- sample(1:length(class),10000)
+# table(class[training]) 
 
 #classify zone based on plant community
-rf <- randomForest(X.grid.ref[training,], class[training], strata=class[training], sampsize=rep(min(table(class[training])), length(levels(class[training]))))  #train the RF model. the strata and sampsize arguments are used for tree-level downsampling to balance the training set
-rf.pred <- predict(rf, X.grid.ref)  #predict back to the whole grid. 
-ct <- table(group=class,class=rf.pred)
-ClassCorrect <- diag(prop.table(ct, 1))
-AllCorrect <- sum(diag(ct))/sum(ct)
 
-png(filename=paste("Results\\WoodlandPrediction_",trial,".png",sep=""), type="cairo", units="in", width=12, height=6, pointsize=12, res=400)
-par(mfrow=c(1,2))
-par(mar=c(0,0,1.5,1))
-ColScheme <- c("dodgerblue", "yellow", "black")
-
-#BGCv10 map
-par(plt = c(0, 1, 0, 0.93), new = F)
-X <- dem
-values(X) <- NA
-values(X)[land][-nonCNA] <- class
-plot(X, col=ColScheme, xaxt="n", yaxt="n", legend=FALSE, legend.mar=0, maxpixels=ncell(X)) 
-box(col="black", lwd=1.5)
-mtext("BGC mapping v10", 3, adj=0.5, padj=0, cex=1.1, line=0.2)
-legend(extent(X)[1]-0.25, 58, legend=paste(levels(class), ": n=", table(class[training]), " (", round(100*table(class[training])/table(class),0), "%)", sep=""), 
-       title=paste("Training sample: n=", sum(table(class[training])), sep="") , 
-       fill=ColScheme, bg="white", col="lightgrey", box.col="white", cex=1.1, inset=0.01)
-
-#inset zoom map
-xlim=c(-131, -128)
-ylim=c(56.25,57.76)
-rect(xlim[1],  ylim[1],  xlim[2],  ylim[2],  col=(alpha("lightgrey", 0.3)))
-par(plt = c(0.01, 0.54, 0.01, 0.5), new = TRUE)
-plot(X, xaxt="n", yaxt="n", xlim=xlim, ylim=ylim, col=ColScheme, legend=FALSE, legend.mar=0, maxpixels=ncell(X)) 
-
-par(plt = c(0, 1, 0, 0.93), new = F)
-values(X)[land][-nonCNA] <- rf.pred
-plot(X, col=ColScheme,  xaxt="n", yaxt="n", legend=FALSE, legend.mar=0, maxpixels=ncell(X)) 
-box(col="black", lwd=1.5)
-mtext("Random Forest Prediction", 3, adj=0.5, padj=0, cex=1.1, line=0.2)
-legend(extent(X)[1], 58.2, legend=paste(levels(class), ": ", as.integer((1-ClassCorrect)*100), "% error", sep=""), 
-       title=paste("Total error: ", round((1-AllCorrect)*100, 1), "%", sep="") , 
-       cex=1.1, inset=0.01, bty="n")
-text(extent(X)[1], 56.5, paste("change in parkland area: ", round(100*(sum(rf.pred=="parkland")-sum(class=="parkland"))/sum(class=="parkland"),0), "%", sep=""), pos=4)
+# rf <- randomForest(X.grid.ref[training,], class[training], strata=class[training], sampsize=rep(min(table(class[training])), length(levels(class[training]))))  #train the RF model. the strata and sampsize arguments are used for tree-level downsampling to balance the training set
+# rf.pred <- predict(rf, X.grid.ref)  #predict back to the whole grid. 
+# ct <- table(group=class,class=rf.pred)
+# ClassCorrect <- diag(prop.table(ct, 1))
+# AllCorrect <- sum(diag(ct))/sum(ct)
+# 
+# png(filename=paste("Results\\WoodlandPrediction_",trial,".png",sep=""), type="cairo", units="in", width=12, height=6, pointsize=12, res=400)
+# par(mfrow=c(1,2))
+# par(mar=c(0,0,1.5,1))
+# ColScheme <- c("dodgerblue", "yellow", "black")
+# 
+# #BGCv10 map
+# par(plt = c(0, 1, 0, 0.93), new = F)
+# X <- dem
+# values(X) <- NA
+# values(X)[land][-nonCNA] <- class
+# plot(X, col=ColScheme, xaxt="n", yaxt="n", legend=FALSE, legend.mar=0, maxpixels=ncell(X)) 
+# box(col="black", lwd=1.5)
+# mtext("BGC mapping v10", 3, adj=0.5, padj=0, cex=1.1, line=0.2)
+# legend(extent(X)[1]-0.25, 58, legend=paste(levels(class), ": n=", table(class[training]), " (", round(100*table(class[training])/table(class),0), "%)", sep=""), 
+#        title=paste("Training sample: n=", sum(table(class[training])), sep="") , 
+#        fill=ColScheme, bg="white", col="lightgrey", box.col="white", cex=1.1, inset=0.01)
 
 #inset zoom map
-xlim=c(-131, -128)
-ylim=c(56.25,57.76)
-rect(xlim[1],  ylim[1],  xlim[2],  ylim[2],  col=(alpha("lightgrey", 0.3)))
-par(plt = c(0.01, 0.54, 0.01, 0.5), new = TRUE)
-plot(X, xaxt="n", yaxt="n", xlim=xlim, ylim=ylim, col=ColScheme, legend=FALSE, legend.mar=0, maxpixels=ncell(X)) 
+# xlim=c(-131, -128)
+# ylim=c(56.25,57.76)
+# rect(xlim[1],  ylim[1],  xlim[2],  ylim[2],  col=(alpha("lightgrey", 0.3)))
+# par(plt = c(0.01, 0.54, 0.01, 0.5), new = TRUE)
+# plot(X, xaxt="n", yaxt="n", xlim=xlim, ylim=ylim, col=ColScheme, legend=FALSE, legend.mar=0, maxpixels=ncell(X)) 
+# 
+# par(plt = c(0, 1, 0, 0.93), new = F)
+# values(X)[land][-nonCNA] <- rf.pred
+# plot(X, col=ColScheme,  xaxt="n", yaxt="n", legend=FALSE, legend.mar=0, maxpixels=ncell(X)) 
+# box(col="black", lwd=1.5)
+# mtext("Random Forest Prediction", 3, adj=0.5, padj=0, cex=1.1, line=0.2)
+# legend(extent(X)[1], 58.2, legend=paste(levels(class), ": ", as.integer((1-ClassCorrect)*100), "% error", sep=""), 
+#        title=paste("Total error: ", round((1-AllCorrect)*100, 1), "%", sep="") , 
+#        cex=1.1, inset=0.01, bty="n")
+# text(extent(X)[1], 56.5, paste("change in parkland area: ", round(100*(sum(rf.pred=="parkland")-sum(class=="parkland"))/sum(class=="parkland"),0), "%", sep=""), pos=4)
 
-dev.off()
+#inset zoom map
+# xlim=c(-131, -128)
+# ylim=c(56.25,57.76)
+# rect(xlim[1],  ylim[1],  xlim[2],  ylim[2],  col=(alpha("lightgrey", 0.3)))
+# par(plt = c(0.01, 0.54, 0.01, 0.5), new = TRUE)
+# plot(X, xaxt="n", yaxt="n", xlim=xlim, ylim=ylim, col=ColScheme, legend=FALSE, legend.mar=0, maxpixels=ncell(X)) 
+
+# dev.off()
