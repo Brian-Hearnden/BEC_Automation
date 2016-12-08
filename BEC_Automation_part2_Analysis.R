@@ -3,6 +3,8 @@
 ##### November 4th, 2016
 rm(list=ls()) #clean the workspace so all previous objects are deleted
 
+
+#Download projects that are not currently downloaded and load packages
 ipak <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
   if (length(new.pkg)) 
@@ -15,13 +17,32 @@ pkgs = c("scales","MASS", "stats", "rgl", "RColorBrewer", "FNN", "igraph", "rast
 
 ipak(pkgs)
 
+
+# get Parameters
+arc.progress_label("Reading parameters...")
+arc.progress_pos(0)
+
+Workspace = in_params[[1]]
+ClimateBC_CSV = in_params[[2]]
+Training_Pts = in_params[[3]]
+
+Output_Raster = out_params[[1]]
+
+
+
+
+
+
 ## need to create this folder and a "Results" and "InputData" folder in it. 
-setwd("C:/Users/elilles/Documents/Automated BEC Mapping of Woodland/WoodlandMapping")
+setwd(Workspace)
 
 ### generate a data frame of analysis variables for the grid points. 
-grid.ref <- read.csv("InputData\\ESSFmc_BAFApts4ClimateBC_Normal_1961_1990MSY.csv", strip.white = TRUE, na.strings = c("NA","",-9999) )
+grid.ref <- read.csv(ClimateBC_CSV, strip.white = TRUE, na.strings = c("NA","",-9999) )
 nonCNA <- which(is.na(grid.ref[,6]))  # dem cells outside climateNA extent. need this for later
 
+
+arc.progress_label("Beginning ")
+arc.progress_pos(0)
 #######WILLS CODE FOR CLIMATE BC VARIABLES TO USE####
 ##Expects data with PlotNo, BGC, Lat, long, Elev as first 5 columns and ALL Variable output from ClimateWNA
 ####modify
@@ -95,34 +116,44 @@ class[grep("BAFA|CMA", BGC)] <- "alpine"
 class[is.na(class)] <- "subalpine"
 class <- factor(class)
 
-# map the three classes
-par(mfrow=c(1,1))
-par(mar=c(0,0,0,0))
-ColScheme <- c("dodgerblue", "yellow", "black")
+
+
+
+
+
+# # map the three classes
+# par(mfrow=c(1,1))
+# par(mar=c(0,0,0,0))
+# ColScheme <- c("dodgerblue", "yellow", "black")
 X <- dem  #uses dem as a template raster
 values(X) <- NA
 values(X)[land] <- class
-plot(X, col=ColScheme, xaxt="n", yaxt="n", legend=FALSE, legend.mar=0, maxpixels=ncell(X)) 
-plot(X, col=ColScheme, xaxt="n", yaxt="n", xlim=c(-132, -127.5), ylim=c(56,58), legend=FALSE, legend.mar=0, maxpixels=ncell(X)) 
-
+write.GDAL(x,Output_Raster, TFW = YES)
+# plot(X, col=ColScheme, xaxt="n", yaxt="n", legend=FALSE, legend.mar=0, maxpixels=ncell(X)) 
+# plot(X, col=ColScheme, xaxt="n", yaxt="n", xlim=c(-132, -127.5), ylim=c(56,58), legend=FALSE, legend.mar=0, maxpixels=ncell(X)) 
+# 
 
 ##################
 #### Parkland classification and mapping Trial 1: balanced data
 ##################
-
-# trial <- "FirstApprox"
 # 
-# #create a fake set of "known points" by subsampling the grid. in reality, these points will be provided by Will and Erica (and will also require a separte climateNA file)
-# training <- sample(1:length(class),10000)
-# table(class[training]) 
+# trial <- "FirstApprox"
 
-#classify zone based on plant community
+# create a fake set of "known points" by subsampling the grid. in reality, these points will be provided by Will and Erica (and will also require a separte climateNA file)
+training <- arc.open(Training_Pts)
+table(class[training])
 
-# rf <- randomForest(X.grid.ref[training,], class[training], strata=class[training], sampsize=rep(min(table(class[training])), length(levels(class[training]))))  #train the RF model. the strata and sampsize arguments are used for tree-level downsampling to balance the training set
-# rf.pred <- predict(rf, X.grid.ref)  #predict back to the whole grid. 
-# ct <- table(group=class,class=rf.pred)
-# ClassCorrect <- diag(prop.table(ct, 1))
-# AllCorrect <- sum(diag(ct))/sum(ct)
+# classify zone based on plant community
+
+rf <- randomForest(X.grid.ref[training,], class[training], strata=class[training], sampsize=rep(min(table(class[training])), length(levels(class[training]))))  #train the RF model. the strata and sampsize arguments are used for tree-level downsampling to balance the training set
+rf.pred <- predict(rf, X.grid.ref)  #predict back to the whole grid.
+ct <- table(group=class,class=rf.pred)
+ClassCorrect <- diag(prop.table(ct, 1))
+AllCorrect <- sum(diag(ct))/sum(ct)
+
+#Unsure if need to write another raster
+
+
 # 
 # png(filename=paste("Results\\WoodlandPrediction_",trial,".png",sep=""), type="cairo", units="in", width=12, height=6, pointsize=12, res=400)
 # par(mfrow=c(1,2))
