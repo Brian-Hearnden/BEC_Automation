@@ -131,22 +131,23 @@ Training=Training[,names(Training) %in% c(List,Training_ClimateVar)]
 BGC <- grid.ref2$BGC
 # 
 # ## create three classes: subalpine, parkland, and alpine
-class <- rep(NA, length(BGC))
-class[BGC%in%c("ESSFmcp", "ESSFmkp", "ESSFmvp", "ESSFunp", "ESSFwvp", "MHunp", "MHwhp")] <- "parkland"
-class[grep("BAFA|CMA", BGC)] <- "alpine"
-class[is.na(class)] <- "subalpine"
-class <- factor(class)
+# class <- rep(NA, length(BGC))
+# class[BGC%in%c("ESSFmcp", "ESSFmkp", "ESSFmvp", "ESSFunp", "ESSFwvp", "MHunp", "MHwhp")] <- "parkland"
+# class[grep("BAFA|CMA", BGC)] <- "alpine"
+# class[is.na(class)] <- "subalpine"
 
-trial <- "FirstApprox"
+class <- ifelse(Training2$BGC == "Woodland", "ESSFmcp", ifelse(Training2$BGC == "ESSFmc", "ESSFmc", "BAFA"))
+class <- factor(class)
+#trial <- "FirstApprox"
 
 #create a fake set of "known points" by subsampling the grid. in reality, these points will be provided by Will and Erica (and will also require a separte climateNA file)
-training <- read.csv("S:\\srm\\smt\\Workarea\\BHearnden\\Ministry_Proj\\Research\\BEC_Automation\\Code_Test\\BEC_SpatialData\\Training_Pts4ClimateBC_Normal_1961_1990MSY.csv")
-table(class[training]) 
+# training <- read.csv("InputData\\Training_Pts4CimateBC_Normal_1961_1990MSY.csv")
+# table(class[training]) 
 
 #classify zone based on plant community
-rf <- randomForest(grid.ref[training,], class[training], strata=class[training], sampsize=rep(min(table(class[training])), length(levels(class[training]))))  #train the RF model. the strata and sampsize arguments are used for tree-level downsampling to balance the training set
+rf <- randomForest(x = Training, y=class, strata=class, sampsize=rep(min(table(class)), length(levels(class))))  #train the RF model. the strata and sampsize arguments are used for tree-level downsampling to balance the Training set
 rf.pred <- predict(rf, grid.ref)  #predict back to the whole grid. 
-ct <- table(group=class,class=rf.pred)
+ct <- table(group=class, class=rf.pred)
 ClassCorrect <- diag(prop.table(ct, 1))
 AllCorrect <- sum(diag(ct))/sum(ct)
 
